@@ -1,0 +1,16 @@
+# Personal / non-portfolio docs — never publish
+CAREER_COACH_REVIEW.md
+AI_TRAINER_GUIDE.md
+ACTION_PLAN.md
+STUCK_LOG.md
+
+# Env / secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
