@@ -1,0 +1,130 @@
+{
+  "metadata": {
+    "description": "Hand-labeled answer key for evaluating the RAG triage system. For each query failure it records the category it SHOULD be classified as, and the IDs of past failures a human would consider genuinely similar (same root-cause pattern).",
+    "how_it_is_used": "eval_retrieval.py checks how many expected_similar_ids appear in the retrieved top-k (recall@k). eval_classification.py checks predicted category vs expected_category.",
+    "note": "DRAFT built from the corpus similarity pairs. YOU are the judge — review each entry and correct any 'similar' relationship you disagree with. The 'why' field is a human note, not used by code.",
+    "labeled_count": 20
+  },
+  "labels": [
+    {
+      "failure_id": "F001",
+      "expected_category": "flaky",
+      "expected_similar_ids": ["F002"],
+      "why": "Both are async race conditions: the test asserts before an async event (webhook / email) is processed."
+    },
+    {
+      "failure_id": "F003",
+      "expected_category": "flaky",
+      "expected_similar_ids": ["F004"],
+      "why": "Both are UI wait-timeouts: element renders but just after the wait window under slow CI."
+    },
+    {
+      "failure_id": "F005",
+      "expected_category": "flaky",
+      "expected_similar_ids": ["F006"],
+      "why": "Both are order-dependent tests: shared state (cache / DB rows) leaks from a prior test with no teardown."
+    },
+    {
+      "failure_id": "F007",
+      "expected_category": "flaky",
+      "expected_similar_ids": ["F008"],
+      "why": "Both are nondeterministic-timing/seed flakes: unseeded RNG and wall-clock timing near a boundary."
+    },
+    {
+      "failure_id": "F009",
+      "expected_category": "flaky",
+      "expected_similar_ids": ["F010"],
+      "why": "Both are intermittent external-dependency failures (third-party 503 / timeout) that pass on rerun."
+    },
+    {
+      "failure_id": "F011",
+      "expected_category": "env",
+      "expected_similar_ids": ["F012"],
+      "why": "Both are Postgres connection-limit problems in the environment (pool exhausted / max_connections). NOTE: F041 also shows a Postgres connection error but its root cause is a wrong PORT in config — that is the retrieval TRAP we want to catch, so it is deliberately NOT listed here."
+    },
+    {
+      "failure_id": "F013",
+      "expected_category": "env",
+      "expected_similar_ids": ["F014"],
+      "why": "Both are OOMKilled pods: memory limit too small for the workload (exit 137)."
+    },
+    {
+      "failure_id": "F015",
+      "expected_category": "env",
+      "expected_similar_ids": ["F016"],
+      "why": "Both are transient network/readiness failures in the cluster (DNS restart / pod not Ready)."
+    },
+    {
+      "failure_id": "F017",
+      "expected_category": "env",
+      "expected_similar_ids": ["F018"],
+      "why": "Both are disk-full (ENOSPC) failures from uncleaned artifacts/images on the CI node."
+    },
+    {
+      "failure_id": "F021",
+      "expected_category": "regression",
+      "expected_similar_ids": ["F022"],
+      "why": "Both are API schema-change regressions: a field was renamed/nested and the consumer parser broke."
+    },
+    {
+      "failure_id": "F023",
+      "expected_category": "regression",
+      "expected_similar_ids": ["F024"],
+      "why": "Both are null/undefined regressions after a refactor: caller assumed a value that is now missing."
+    },
+    {
+      "failure_id": "F025",
+      "expected_category": "regression",
+      "expected_similar_ids": ["F026"],
+      "why": "Both are off-by-one / boundary regressions from a changed comparison or slice bound."
+    },
+    {
+      "failure_id": "F027",
+      "expected_category": "regression",
+      "expected_similar_ids": ["F028"],
+      "why": "Both are dependency-upgrade regressions: a bumped library removed/changed an API the code used."
+    },
+    {
+      "failure_id": "F031",
+      "expected_category": "data",
+      "expected_similar_ids": ["F032"],
+      "why": "Both are missing-required-field data problems: input omitted a field the parser/validator required."
+    },
+    {
+      "failure_id": "F033",
+      "expected_category": "data",
+      "expected_similar_ids": ["F034"],
+      "why": "Both are encoding problems: input has characters/encoding the reader/writer cannot handle."
+    },
+    {
+      "failure_id": "F035",
+      "expected_category": "data",
+      "expected_similar_ids": ["F036"],
+      "why": "Both are DB-constraint violations from bad input data (duplicate key / missing foreign-key reference)."
+    },
+    {
+      "failure_id": "F039",
+      "expected_category": "data",
+      "expected_similar_ids": ["F040"],
+      "why": "Both are empty/boundary data conditions: empty result set / zero denominator with no guard."
+    },
+    {
+      "failure_id": "F041",
+      "expected_category": "config",
+      "expected_similar_ids": ["F042"],
+      "why": "Both are wrong-endpoint config: bad port / malformed URL. NOTE: F041's error text resembles F011/F012 (env), which is the trap for retrieval."
+    },
+    {
+      "failure_id": "F043",
+      "expected_category": "config",
+      "expected_similar_ids": ["F044"],
+      "why": "Both are feature-flag misconfigurations: flag defaulted off, so the wrong code path ran."
+    },
+    {
+      "failure_id": "F049",
+      "expected_category": "config",
+      "expected_similar_ids": ["F050"],
+      "why": "Both are version-pin misconfigurations: config pins a schema/model version that no longer matches reality."
+    }
+  ]
+}
