@@ -1,0 +1,29 @@
+import os                              # lets us read environment variables
+from dotenv import load_dotenv         # the helper that reads the .env file
+from anthropic import Anthropic        # the official Claude SDK
+
+# STEP 1: read the .env file and copy its values into the environment.
+load_dotenv()
+
+# STEP 2: pull the key OUT of the environment into a normal Python variable.
+# Now we can actually see it in the code (it holds the sk-ant-... string).
+api_key = os.getenv("ANTHROPIC_API_KEY")
+
+# STEP 3: create the client and HAND IT the key explicitly.
+# base_url forces the public API (your shell points ANTHROPIC_BASE_URL at an
+# internal gateway, which we do NOT want here).
+client = Anthropic(
+    api_key=api_key,
+    base_url="https://api.anthropic.com",
+)
+
+# STEP 4: send one message. The client attaches the key as a request header
+# (x-api-key) behind the scenes and sends it over HTTPS to Claude.
+response = client.messages.create(
+    model="claude-haiku-4-5-20251001",   # cheap model, good for testing
+    max_tokens=100,
+    messages=[{"role": "user", "content": "Say hello in one short sentence."}],
+)
+
+# STEP 5: the reply text lives at response.content[0].text
+print(response.content[0].text)

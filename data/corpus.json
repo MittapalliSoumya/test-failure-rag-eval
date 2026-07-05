@@ -1,0 +1,511 @@
+{
+  "metadata": {
+    "description": "Synthetic test-failure corpus for RAG triage eval. 50 records, 10 per category. Fully synthetic — no real Salesforce or production data.",
+    "generated": "2026-07-04",
+    "categories": ["flaky", "env", "regression", "data", "config"],
+    "schema": ["id", "stack_trace", "log_snippet", "timestamp", "service", "true_category", "true_root_cause"],
+    "note": "Records are intentionally built in similarity clusters (pairs sharing a root-cause pattern) to give retrieval eval real structure. See cluster_hint field."
+  },
+  "records": [
+    {
+      "id": "F001",
+      "stack_trace": "AssertionError: expected order status 'CONFIRMED' but was 'PENDING'\n  at test_checkout.py:142 in test_order_confirmed_after_payment\n  at OrderAssertions.assert_status (assertions.py:88)",
+      "log_snippet": "12:04:11.201 INFO  payment webhook dispatched\n12:04:11.203 INFO  assertion evaluated status=PENDING\n12:04:11.640 INFO  webhook processed status=CONFIRMED (arrived 437ms after assertion)",
+      "timestamp": "2026-06-12T12:04:11Z",
+      "service": "checkout-service",
+      "true_category": "flaky",
+      "true_root_cause": "Race condition: test asserts order status before the async payment webhook has been processed. Passes when the webhook is fast, fails when it lags.",
+      "cluster_hint": "async-race"
+    },
+    {
+      "id": "F002",
+      "stack_trace": "AssertionError: expected notification count 1 but was 0\n  at test_notify.py:77 in test_email_sent_on_signup\n  at NotifyAssertions.assert_count (assertions.py:88)",
+      "log_snippet": "09:31:02.010 INFO  signup event emitted\n09:31:02.011 INFO  assertion checked mailbox size=0\n09:31:02.250 INFO  async consumer delivered email 239ms later",
+      "timestamp": "2026-06-14T09:31:02Z",
+      "service": "notification-service",
+      "true_category": "flaky",
+      "true_root_cause": "Race condition: assertion runs before the asynchronous email consumer processes the queued event. Nondeterministic based on consumer latency.",
+      "cluster_hint": "async-race"
+    },
+    {
+      "id": "F003",
+      "stack_trace": "TimeoutError: waited 5000ms for selector '#dashboard-loaded'\n  at test_login_ui.py:53 in test_dashboard_renders\n  at WebDriver.wait_for (driver.py:210)",
+      "log_snippet": "14:22:40.500 INFO  navigated to /dashboard\n14:22:45.501 ERROR selector '#dashboard-loaded' not found within 5000ms\n14:22:46.900 INFO  element appeared 1399ms after timeout (slow CI runner)",
+      "timestamp": "2026-06-15T14:22:45Z",
+      "service": "web-ui",
+      "true_category": "flaky",
+      "true_root_cause": "UI wait timeout too tight for a slow CI runner; the element renders but past the 5s window. Environment-speed-dependent, not a real defect.",
+      "cluster_hint": "ui-wait-timeout"
+    },
+    {
+      "id": "F004",
+      "stack_trace": "TimeoutError: waited 3000ms for selector '.toast-success'\n  at test_profile_ui.py:118 in test_save_profile_shows_toast\n  at WebDriver.wait_for (driver.py:210)",
+      "log_snippet": "16:08:12.100 INFO  clicked save\n16:08:15.101 ERROR toast '.toast-success' not visible in 3000ms\n16:08:15.480 INFO  toast rendered 379ms late under CI load",
+      "timestamp": "2026-06-16T16:08:15Z",
+      "service": "web-ui",
+      "true_category": "flaky",
+      "true_root_cause": "Explicit-wait window too short under CI load; the success toast appears but after the assertion window. Timing-dependent flake.",
+      "cluster_hint": "ui-wait-timeout"
+    },
+    {
+      "id": "F005",
+      "stack_trace": "AssertionError: expected cache empty but found 3 entries\n  at test_cache.py:64 in test_cache_starts_empty\n  at CacheAssertions.assert_empty (assertions.py:120)",
+      "log_snippet": "11:00:01.000 INFO  test_cache_starts_empty began\n11:00:01.002 WARN  cache contained residue from prior test test_cache_populated\n11:00:01.003 ERROR shared cache not reset between tests",
+      "timestamp": "2026-06-17T11:00:01Z",
+      "service": "catalog-service",
+      "true_category": "flaky",
+      "true_root_cause": "Order-dependent test: shared cache state leaks from a previous test because there is no teardown. Passes in isolation, fails when run after another test.",
+      "cluster_hint": "shared-state-order"
+    },
+    {
+      "id": "F006",
+      "stack_trace": "AssertionError: expected user count 0 but was 2\n  at test_users.py:39 in test_no_users_initially\n  at DbAssertions.assert_row_count (assertions.py:145)",
+      "log_snippet": "10:15:00.010 INFO  test_no_users_initially began\n10:15:00.011 WARN  users table held rows created by test_create_user\n10:15:00.012 ERROR test isolation broken: no transaction rollback",
+      "timestamp": "2026-06-18T10:15:00Z",
+      "service": "user-service",
+      "true_category": "flaky",
+      "true_root_cause": "Test isolation failure: previous test's DB writes were not rolled back, so row counts leak between tests. Order-dependent flake.",
+      "cluster_hint": "shared-state-order"
+    },
+    {
+      "id": "F007",
+      "stack_trace": "AssertionError: expected shuffled list != original but they were equal\n  at test_shuffle.py:28 in test_shuffle_changes_order\n  at ListAssertions.assert_not_equal (assertions.py:60)",
+      "log_snippet": "08:45:33.100 INFO  random seed not fixed for test run\n08:45:33.101 WARN  shuffle produced identity permutation (1/n! chance)\n08:45:33.102 ERROR nondeterministic assertion failed this run",
+      "timestamp": "2026-06-19T08:45:33Z",
+      "service": "recommendation-service",
+      "true_category": "flaky",
+      "true_root_cause": "Unseeded randomness: shuffle occasionally returns the original order, failing the assertion. Nondeterministic because the RNG seed is not pinned in the test.",
+      "cluster_hint": "nondeterministic-seed"
+    },
+    {
+      "id": "F008",
+      "stack_trace": "AssertionError: expected token expiry in future but was in past\n  at test_token.py:91 in test_token_not_expired\n  at TimeAssertions.assert_future (assertions.py:200)",
+      "log_snippet": "23:59:58.900 INFO  token issued ttl=2s\n23:59:59.100 INFO  assertion ran near midnight boundary\n00:00:01.050 ERROR token expired before assertion due to test wall-clock drift",
+      "timestamp": "2026-06-20T23:59:59Z",
+      "service": "auth-service",
+      "true_category": "flaky",
+      "true_root_cause": "Time-dependent test: a short TTL combined with real wall-clock timing near a boundary makes the token expire mid-test. Fails intermittently based on execution speed and clock.",
+      "cluster_hint": "nondeterministic-seed"
+    },
+    {
+      "id": "F009",
+      "stack_trace": "requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.stripe-sandbox.test'): Max retries exceeded\n  at test_payment_gateway.py:47 in test_charge_succeeds\n  at PaymentClient.charge (client.py:88)",
+      "log_snippet": "13:20:10.000 INFO  calling sandbox payment gateway\n13:20:12.500 WARN  sandbox returned 503 (intermittent)\n13:20:12.501 INFO  retry on rerun succeeded — third-party sandbox flaky",
+      "timestamp": "2026-06-21T13:20:12Z",
+      "service": "payment-service",
+      "true_category": "flaky",
+      "true_root_cause": "Intermittent third-party sandbox outage (503) makes the test fail nondeterministically. Not our defect; the external dependency is unreliable.",
+      "cluster_hint": "external-intermittent"
+    },
+    {
+      "id": "F010",
+      "stack_trace": "socket.timeout: The read operation timed out\n  at test_geocode.py:33 in test_address_geocoded\n  at GeoClient.lookup (client.py:54)",
+      "log_snippet": "17:44:01.000 INFO  querying external geocoding API\n17:44:11.001 WARN  no response in 10s (external API latency spike)\n17:44:30.000 INFO  same request succeeded on rerun",
+      "timestamp": "2026-06-22T17:44:11Z",
+      "service": "shipping-service",
+      "true_category": "flaky",
+      "true_root_cause": "External geocoding API latency spike causes an intermittent read timeout. Rerun passes; the flake originates in an unreliable third-party dependency.",
+      "cluster_hint": "external-intermittent"
+    },
+    {
+      "id": "F011",
+      "stack_trace": "psycopg2.OperationalError: could not connect to server: Connection timed out\n  at db/pool.py:132 in acquire_connection\n  at test_orders_integration.py:22 in setup",
+      "log_snippet": "02:11:03.000 ERROR Postgres pool exhausted: 20/20 connections in use\n02:11:33.000 ERROR acquire timed out after 30s\n02:11:33.001 INFO  DB CPU 94%, active connections pinned at max",
+      "timestamp": "2026-06-10T02:11:33Z",
+      "service": "orders-service",
+      "true_category": "env",
+      "true_root_cause": "Postgres connection pool exhaustion in the test environment: all 20 connections held, new acquisitions time out. Environment capacity issue, not application logic.",
+      "cluster_hint": "postgres-pool"
+    },
+    {
+      "id": "F012",
+      "stack_trace": "psycopg2.OperationalError: FATAL: remaining connection slots are reserved\n  at db/pool.py:132 in acquire_connection\n  at test_reporting.py:41 in setup",
+      "log_snippet": "03:50:09.000 ERROR Postgres max_connections=100 reached\n03:50:09.010 ERROR new connection rejected: slots reserved for superuser\n03:50:09.011 INFO  parallel test shards over-subscribed the DB",
+      "timestamp": "2026-06-11T03:50:09Z",
+      "service": "reporting-service",
+      "true_category": "env",
+      "true_root_cause": "Database max_connections ceiling hit because parallel test shards opened too many connections against a shared test DB. Environment resource limit.",
+      "cluster_hint": "postgres-pool"
+    },
+    {
+      "id": "F013",
+      "stack_trace": "MemoryError\n  at etl/transform.py:210 in load_batch\n  at test_etl_pipeline.py:88 in test_large_batch\nKilled (OOMKilled)",
+      "log_snippet": "04:30:00.000 INFO  worker pod memory limit 512Mi\n04:30:41.000 WARN  RSS climbed to 508Mi loading batch\n04:30:41.500 ERROR container OOMKilled, exit code 137",
+      "timestamp": "2026-06-09T04:30:41Z",
+      "service": "etl-worker",
+      "true_category": "env",
+      "true_root_cause": "Worker pod OOMKilled: the 512Mi memory limit is too small for the batch size, so the kernel kills the container (exit 137). Environment sizing issue.",
+      "cluster_hint": "oom-pod"
+    },
+    {
+      "id": "F014",
+      "stack_trace": "java.lang.OutOfMemoryError: Java heap space\n  at ImageResizer.resize(ImageResizer.java:144)\n  at test_thumbnail_gen.py:60 in test_batch_resize\nKilled (OOMKilled)",
+      "log_snippet": "05:12:00.000 INFO  JVM -Xmx256m in test pod\n05:12:18.000 WARN  heap usage 250m during batch resize\n05:12:18.900 ERROR OutOfMemoryError, pod OOMKilled exit 137",
+      "timestamp": "2026-06-13T05:12:18Z",
+      "service": "media-service",
+      "true_category": "env",
+      "true_root_cause": "JVM heap (-Xmx256m) too small for the image batch, causing OutOfMemoryError and pod OOMKill. Environment/resource-limit problem, not a code defect.",
+      "cluster_hint": "oom-pod"
+    },
+    {
+      "id": "F015",
+      "stack_trace": "socket.gaierror: [Errno -2] Name or service not known: 'inventory-db.internal'\n  at net/resolver.py:44 in resolve\n  at test_inventory.py:19 in setup",
+      "log_snippet": "07:00:00.000 ERROR DNS lookup failed for inventory-db.internal\n07:00:00.010 WARN  cluster CoreDNS pod was restarting\n07:00:20.000 INFO  resolution recovered after DNS came back",
+      "timestamp": "2026-06-08T07:00:00Z",
+      "service": "inventory-service",
+      "true_category": "env",
+      "true_root_cause": "Cluster DNS (CoreDNS) was mid-restart, so the internal hostname failed to resolve. Transient environment/network problem, not application code.",
+      "cluster_hint": "network-dns"
+    },
+    {
+      "id": "F016",
+      "stack_trace": "requests.exceptions.ConnectionError: [Errno 111] Connection refused: http://billing-svc:8080/health\n  at net/http.py:90 in get\n  at test_billing_health.py:14 in test_dependency_up",
+      "log_snippet": "07:45:00.000 ERROR connection refused to billing-svc:8080\n07:45:00.010 WARN  billing-svc pod not yet Ready (still starting)\n07:45:30.000 INFO  health check passed once pod became Ready",
+      "timestamp": "2026-06-08T07:45:00Z",
+      "service": "billing-service",
+      "true_category": "env",
+      "true_root_cause": "Dependency pod was not yet Ready when the test ran, so connections were refused. Environment startup-ordering/readiness problem.",
+      "cluster_hint": "network-dns"
+    },
+    {
+      "id": "F017",
+      "stack_trace": "OSError: [Errno 28] No space left on device\n  at io/writer.py:67 in write_artifact\n  at test_export.py:102 in test_write_report",
+      "log_snippet": "01:20:00.000 ERROR /tmp at 100% (10Gi) on CI node\n01:20:00.010 WARN  accumulated artifacts from prior runs not cleaned\n01:20:00.011 ERROR write failed: No space left on device",
+      "timestamp": "2026-06-07T01:20:00Z",
+      "service": "export-service",
+      "true_category": "env",
+      "true_root_cause": "CI node disk (/tmp) filled to 100% by uncleaned artifacts from prior runs, so the write failed with ENOSPC. Environment/housekeeping issue.",
+      "cluster_hint": "disk-full"
+    },
+    {
+      "id": "F018",
+      "stack_trace": "IOError: [Errno 28] No space left on device: '/var/lib/docker'\n  at build/image.py:33 in build\n  at test_container_build.py:20 in test_image_builds",
+      "log_snippet": "23:10:00.000 ERROR docker layer write failed: disk full\n23:10:00.010 WARN  /var/lib/docker at 98% from dangling images\n23:10:00.011 INFO  prune freed space, rebuild succeeded",
+      "timestamp": "2026-06-06T23:10:00Z",
+      "service": "ci-runner",
+      "true_category": "env",
+      "true_root_cause": "Docker storage volume filled by dangling images left the build unable to write layers (ENOSPC). Environment disk-capacity/cleanup problem.",
+      "cluster_hint": "disk-full"
+    },
+    {
+      "id": "F019",
+      "stack_trace": "KeyError: 'REDIS_URL'\n  at config/env.py:22 in require\n  at test_session_store.py:11 in setup",
+      "log_snippet": "06:00:00.000 ERROR required env var REDIS_URL not set in test environment\n06:00:00.010 WARN  secret not injected into pod (missing secretRef)\n06:00:00.011 ERROR setup aborted",
+      "timestamp": "2026-06-05T06:00:00Z",
+      "service": "session-service",
+      "true_category": "env",
+      "true_root_cause": "Required environment variable REDIS_URL was missing because the secret was not injected into the test pod. Environment provisioning gap.",
+      "cluster_hint": "missing-secret-cert"
+    },
+    {
+      "id": "F020",
+      "stack_trace": "ssl.SSLCertVerificationError: certificate has expired (_ssl.c:1129)\n  at net/tls.py:71 in handshake\n  at test_secure_api.py:30 in test_https_call",
+      "log_snippet": "08:00:00.000 ERROR TLS handshake failed: certificate expired 2026-06-04\n08:00:00.010 WARN  test env cert not rotated\n08:00:00.011 ERROR HTTPS call aborted",
+      "timestamp": "2026-06-05T08:00:00Z",
+      "service": "gateway-service",
+      "true_category": "env",
+      "true_root_cause": "The test environment's TLS certificate expired and was not rotated, so the HTTPS handshake failed. Environment/cert-management problem.",
+      "cluster_hint": "missing-secret-cert"
+    },
+    {
+      "id": "F021",
+      "stack_trace": "KeyError: 'total_amount'\n  at parsers/order.py:58 in parse_response\n  at test_order_api.py:73 in test_order_total_present",
+      "log_snippet": "10:00:00.000 INFO  API v2 deployed in commit a1b2c3d\n10:00:00.010 ERROR response missing 'total_amount'; field renamed to 'grand_total'\n10:00:00.011 ERROR consumer parser not updated",
+      "timestamp": "2026-06-25T10:00:00Z",
+      "service": "orders-service",
+      "true_category": "regression",
+      "true_root_cause": "API response schema changed (total_amount renamed to grand_total) in a recent commit, but the consumer parser was not updated. Breaking change introduced by code.",
+      "cluster_hint": "schema-rename"
+    },
+    {
+      "id": "F022",
+      "stack_trace": "KeyError: 'userId'\n  at parsers/profile.py:41 in parse\n  at test_profile_api.py:52 in test_profile_id_present",
+      "log_snippet": "11:30:00.000 INFO  profile API refactor merged in commit e4f5g6h\n11:30:00.010 ERROR field 'userId' now nested under 'user.id'\n11:30:00.011 ERROR flat-access parser broke",
+      "timestamp": "2026-06-26T11:30:00Z",
+      "service": "user-service",
+      "true_category": "regression",
+      "true_root_cause": "A refactor nested the previously top-level userId under user.id, breaking consumers that read the flat field. Schema-change regression from a code commit.",
+      "cluster_hint": "schema-rename"
+    },
+    {
+      "id": "F023",
+      "stack_trace": "AttributeError: 'NoneType' object has no attribute 'email'\n  at handlers/welcome.py:88 in send_welcome\n  at test_welcome.py:44 in test_welcome_email",
+      "log_snippet": "09:10:00.000 INFO  commit 7h8i9j0 changed get_user to return None on miss\n09:10:00.010 ERROR caller assumed non-null user, dereferenced .email\n09:10:00.011 ERROR NoneType attribute access",
+      "timestamp": "2026-06-27T09:10:00Z",
+      "service": "notification-service",
+      "true_category": "regression",
+      "true_root_cause": "A commit changed get_user() to return None on a cache miss; a downstream caller still assumed a non-null object and dereferenced .email. Null-handling regression.",
+      "cluster_hint": "null-after-refactor"
+    },
+    {
+      "id": "F024",
+      "stack_trace": "TypeError: Cannot read properties of undefined (reading 'price')\n  at cart.js:212 in computeSubtotal\n  at test_cart.spec.js:66 in 'subtotal is correct'",
+      "log_snippet": "14:00:00.000 INFO  commit k1l2m3n removed default line-item price\n14:00:00.010 ERROR item.price undefined for legacy items\n14:00:00.011 ERROR subtotal computation threw",
+      "timestamp": "2026-06-28T14:00:00Z",
+      "service": "cart-service",
+      "true_category": "regression",
+      "true_root_cause": "A commit removed the default price on line items, so legacy items now have undefined price and subtotal math throws. Null/undefined regression from code change.",
+      "cluster_hint": "null-after-refactor"
+    },
+    {
+      "id": "F025",
+      "stack_trace": "AssertionError: expected 10 items on page but got 11\n  at test_pagination.py:80 in test_page_size\n  at PageAssertions.assert_count (assertions.py:150)",
+      "log_snippet": "15:20:00.000 INFO  commit o4p5q6r changed slice to items[start:end+1]\n15:20:00.010 ERROR off-by-one: inclusive end returns 11 rows\n15:20:00.011 ERROR pagination boundary regression",
+      "timestamp": "2026-06-24T15:20:00Z",
+      "service": "catalog-service",
+      "true_category": "regression",
+      "true_root_cause": "An off-by-one introduced by changing the slice bound to end+1 returns 11 items instead of the page size of 10. Boundary-logic regression from a code change.",
+      "cluster_hint": "off-by-one-boundary"
+    },
+    {
+      "id": "F026",
+      "stack_trace": "AssertionError: expected discount applied at qty>=10 but applied at qty>=9\n  at test_pricing.py:113 in test_bulk_discount_threshold\n  at PriceAssertions.assert_eq (assertions.py:60)",
+      "log_snippet": "16:40:00.000 INFO  commit s7t8u9v changed '>' to '>=' in threshold check\n16:40:00.010 ERROR discount now triggers one unit early\n16:40:00.011 ERROR threshold boundary regression",
+      "timestamp": "2026-06-23T16:40:00Z",
+      "service": "pricing-service",
+      "true_category": "regression",
+      "true_root_cause": "A commit changed a comparison operator (> to >=) so the bulk-discount threshold triggers one quantity early. Boundary-condition regression from code.",
+      "cluster_hint": "off-by-one-boundary"
+    },
+    {
+      "id": "F027",
+      "stack_trace": "ImportError: cannot import name 'json' from 'werkzeug' (werkzeug/__init__.py)\n  at app/serializers.py:3\n  at test_serialize.py:5 in <module>",
+      "log_snippet": "10:05:00.000 INFO  werkzeug auto-upgraded 2.0->2.3 in lockfile bump\n10:05:00.010 ERROR removed export 'json' in 2.1\n10:05:00.011 ERROR import failed after dependency upgrade",
+      "timestamp": "2026-06-22T10:05:00Z",
+      "service": "api-gateway",
+      "true_category": "regression",
+      "true_root_cause": "A transitive dependency upgrade (werkzeug 2.0→2.3) removed a symbol the code imported, breaking the import. Breaking change from a dependency bump.",
+      "cluster_hint": "dependency-upgrade"
+    },
+    {
+      "id": "F028",
+      "stack_trace": "TypeError: drop() got an unexpected keyword argument 'labels' after pandas upgrade\n  at analytics/clean.py:77 in dedupe\n  at test_clean.py:33 in test_dedupe",
+      "log_snippet": "11:15:00.000 INFO  pandas upgraded 1.5->2.1 in requirements\n11:15:00.010 ERROR positional/keyword API changed in 2.x\n11:15:00.011 ERROR call signature no longer valid",
+      "timestamp": "2026-06-21T11:15:00Z",
+      "service": "analytics-service",
+      "true_category": "regression",
+      "true_root_cause": "A pandas major upgrade (1.5→2.1) changed a method signature the code relied on, breaking the call. Dependency-upgrade regression.",
+      "cluster_hint": "dependency-upgrade"
+    },
+    {
+      "id": "F029",
+      "stack_trace": "AssertionError: expected sorted ascending but got insertion order\n  at test_search.py:91 in test_results_sorted\n  at SortAssertions.assert_sorted (assertions.py:180)",
+      "log_snippet": "12:25:00.000 INFO  commit w1x2y3z changed default sort from 'relevance' to 'none'\n12:25:00.010 ERROR results no longer sorted by default\n12:25:00.011 ERROR changed default behavior regression",
+      "timestamp": "2026-06-20T12:25:00Z",
+      "service": "search-service",
+      "true_category": "regression",
+      "true_root_cause": "A commit changed the default sort mode, so results now come back unsorted unless explicitly requested. Changed-default-behavior regression.",
+      "cluster_hint": "changed-default"
+    },
+    {
+      "id": "F030",
+      "stack_trace": "AssertionError: expected retries=3 but was 0\n  at test_http_client.py:58 in test_retries_enabled\n  at RetryAssertions.assert_eq (assertions.py:60)",
+      "log_snippet": "13:35:00.000 INFO  commit a4b5c6d flipped retry default to disabled\n13:35:00.010 ERROR client no longer retries by default\n13:35:00.011 ERROR silent behavior change regression",
+      "timestamp": "2026-06-19T13:35:00Z",
+      "service": "shipping-service",
+      "true_category": "regression",
+      "true_root_cause": "A commit flipped the HTTP client's default retry policy to disabled, silently changing behavior for all callers. Changed-default regression.",
+      "cluster_hint": "changed-default"
+    },
+    {
+      "id": "F031",
+      "stack_trace": "ValueError: invalid literal for int() with base 10: ''\n  at parsers/csv.py:44 in parse_row\n  at test_import.py:61 in test_import_orders",
+      "log_snippet": "10:00:00.000 INFO  importing orders.csv\n10:00:00.010 ERROR row 8842 has empty 'quantity' field\n10:00:00.011 ERROR int() on empty string failed",
+      "timestamp": "2026-06-18T10:00:00Z",
+      "service": "import-service",
+      "true_category": "data",
+      "true_root_cause": "Input CSV contained a row with an empty required field (quantity), and the parser assumed all rows are well-formed. Bad/missing input data, not a code defect.",
+      "cluster_hint": "missing-field"
+    },
+    {
+      "id": "F032",
+      "stack_trace": "pydantic.ValidationError: 1 validation error for Event\\nuser_id\\n  field required (type=value_error.missing)\n  at ingest/validate.py:30 in validate\n  at test_ingest.py:49 in test_valid_event",
+      "log_snippet": "11:10:00.000 INFO  consuming analytics events\n11:10:00.010 ERROR event payload missing required 'user_id'\n11:10:00.011 ERROR upstream producer omitted the field for anonymous sessions",
+      "timestamp": "2026-06-17T11:10:00Z",
+      "service": "analytics-service",
+      "true_category": "data",
+      "true_root_cause": "An incoming event payload omitted the required user_id field (anonymous session), failing schema validation. Unexpected input data shape.",
+      "cluster_hint": "missing-field"
+    },
+    {
+      "id": "F033",
+      "stack_trace": "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0\n  at io/reader.py:27 in read_text\n  at test_upload.py:38 in test_parse_upload",
+      "log_snippet": "12:20:00.000 INFO  parsing uploaded file\n12:20:00.010 ERROR file is UTF-16 with BOM, read as UTF-8\n12:20:00.011 ERROR byte 0xff invalid for utf-8",
+      "timestamp": "2026-06-16T12:20:00Z",
+      "service": "upload-service",
+      "true_category": "data",
+      "true_root_cause": "Uploaded file was UTF-16 (with BOM) but decoded as UTF-8, producing invalid bytes. Unexpected input encoding in the data.",
+      "cluster_hint": "encoding"
+    },
+    {
+      "id": "F034",
+      "stack_trace": "UnicodeEncodeError: 'ascii' codec can't encode character '\\u2013' in position 14\n  at export/writer.py:52 in write_name\n  at test_export.py:70 in test_export_names",
+      "log_snippet": "13:30:00.000 INFO  exporting customer names\n13:30:00.010 ERROR name contains en-dash U+2013 (non-ASCII)\n13:30:00.011 ERROR ascii writer could not encode",
+      "timestamp": "2026-06-15T13:30:00Z",
+      "service": "export-service",
+      "true_category": "data",
+      "true_root_cause": "A customer name contained a non-ASCII character (en-dash) that the ASCII-configured writer could not encode. Unexpected character in the input data.",
+      "cluster_hint": "encoding"
+    },
+    {
+      "id": "F035",
+      "stack_trace": "psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint 'users_email_key'\n  at db/write.py:80 in insert_user\n  at test_signup.py:55 in test_create_user",
+      "log_snippet": "14:40:00.000 INFO  inserting new user\n14:40:00.010 ERROR email 'a@b.test' already exists in seed data\n14:40:00.011 ERROR unique constraint violated",
+      "timestamp": "2026-06-14T14:40:00Z",
+      "service": "user-service",
+      "true_category": "data",
+      "true_root_cause": "Test seed data already contained the email being inserted, causing a unique-constraint violation. Duplicate/colliding input data.",
+      "cluster_hint": "duplicate-constraint"
+    },
+    {
+      "id": "F036",
+      "stack_trace": "IntegrityError: FOREIGN KEY constraint failed\n  at db/write.py:112 in insert_order\n  at test_orders.py:60 in test_create_order",
+      "log_snippet": "15:50:00.000 INFO  inserting order referencing customer_id=99999\n15:50:00.010 ERROR customer_id 99999 does not exist in fixtures\n15:50:00.011 ERROR foreign key constraint failed",
+      "timestamp": "2026-06-13T15:50:00Z",
+      "service": "orders-service",
+      "true_category": "data",
+      "true_root_cause": "Test attempted to insert an order referencing a customer_id absent from the fixtures, violating the foreign-key constraint. Inconsistent/missing reference data.",
+      "cluster_hint": "duplicate-constraint"
+    },
+    {
+      "id": "F037",
+      "stack_trace": "TypeError: '<' not supported between instances of 'str' and 'int'\n  at sort/compare.py:19 in by_price\n  at test_sort.py:41 in test_sort_by_price",
+      "log_snippet": "16:00:00.000 INFO  sorting products by price\n16:00:00.010 ERROR price arrived as string '19.99' for some rows\n16:00:00.011 ERROR mixed str/int comparison failed",
+      "timestamp": "2026-06-12T16:00:00Z",
+      "service": "catalog-service",
+      "true_category": "data",
+      "true_root_cause": "Some records carried price as a string while others were numeric, so comparison failed during sort. Inconsistent data typing in the input.",
+      "cluster_hint": "type-mismatch"
+    },
+    {
+      "id": "F038",
+      "stack_trace": "ValueError: could not convert string to float: 'N/A'\n  at metrics/agg.py:66 in mean\n  at test_metrics.py:52 in test_average_latency",
+      "log_snippet": "17:10:00.000 INFO  aggregating latency metrics\n17:10:00.010 ERROR sentinel value 'N/A' present in numeric column\n17:10:00.011 ERROR float() conversion failed",
+      "timestamp": "2026-06-11T17:10:00Z",
+      "service": "monitoring-service",
+      "true_category": "data",
+      "true_root_cause": "A numeric column contained the sentinel string 'N/A' for missing values, breaking float conversion during aggregation. Unexpected value type in data.",
+      "cluster_hint": "type-mismatch"
+    },
+    {
+      "id": "F039",
+      "stack_trace": "IndexError: list index out of range\n  at reports/top.py:24 in top_seller\n  at test_reports.py:47 in test_top_seller",
+      "log_snippet": "18:20:00.000 INFO  computing top seller for date range\n18:20:00.010 ERROR query returned empty result set (no sales that day)\n18:20:00.011 ERROR code accessed results[0] on empty list",
+      "timestamp": "2026-06-10T18:20:00Z",
+      "service": "reporting-service",
+      "true_category": "data",
+      "true_root_cause": "The query returned an empty result set for a date with no sales, and the code accessed results[0] without an empty check. Boundary/empty-data condition.",
+      "cluster_hint": "empty-boundary"
+    },
+    {
+      "id": "F040",
+      "stack_trace": "ZeroDivisionError: division by zero\n  at stats/rate.py:15 in conversion_rate\n  at test_stats.py:39 in test_conversion_rate",
+      "log_snippet": "19:30:00.000 INFO  computing conversion rate\n19:30:00.010 ERROR visitor count was 0 for the segment\n19:30:00.011 ERROR divide by zero on empty denominator",
+      "timestamp": "2026-06-09T19:30:00Z",
+      "service": "analytics-service",
+      "true_category": "data",
+      "true_root_cause": "A segment had zero visitors, producing a zero denominator, and the rate calculation lacked a guard. Empty/boundary data condition.",
+      "cluster_hint": "empty-boundary"
+    },
+    {
+      "id": "F041",
+      "stack_trace": "requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=5433): Connection refused\n  at db/connect.py:20 in connect\n  at test_db_smoke.py:12 in test_connect",
+      "log_snippet": "08:00:00.000 ERROR config points DB port to 5433, actual Postgres on 5432\n08:00:00.010 WARN  wrong port in test config map\n08:00:00.011 ERROR connection refused",
+      "timestamp": "2026-06-08T08:00:00Z",
+      "service": "orders-service",
+      "true_category": "config",
+      "true_root_cause": "Test config pointed the database port to 5433 while Postgres listens on 5432. Misconfiguration of the connection endpoint.",
+      "cluster_hint": "wrong-endpoint"
+    },
+    {
+      "id": "F042",
+      "stack_trace": "requests.exceptions.MissingSchema: Invalid URL 'api-host/v1/charge': No scheme supplied\n  at http/client.py:33 in post\n  at test_payment.py:28 in test_charge",
+      "log_snippet": "09:10:00.000 ERROR PAYMENT_API_URL set to 'api-host/v1/charge' (missing https://)\n09:10:00.010 WARN  malformed base URL in config\n09:10:00.011 ERROR request could not be built",
+      "timestamp": "2026-06-07T09:10:00Z",
+      "service": "payment-service",
+      "true_category": "config",
+      "true_root_cause": "The configured API base URL was missing the scheme (https://), so requests could not be constructed. Malformed endpoint configuration.",
+      "cluster_hint": "wrong-endpoint"
+    },
+    {
+      "id": "F043",
+      "stack_trace": "AssertionError: expected new-checkout flow but got legacy flow\n  at test_checkout_flag.py:44 in test_new_checkout_enabled\n  at FlagAssertions.assert_variant (assertions.py:90)",
+      "log_snippet": "10:20:00.000 ERROR flag 'new_checkout' default=false in test config\n10:20:00.010 WARN  test expects it enabled but override not set\n10:20:00.011 ERROR wrong code path executed",
+      "timestamp": "2026-06-06T10:20:00Z",
+      "service": "checkout-service",
+      "true_category": "config",
+      "true_root_cause": "The 'new_checkout' feature flag defaulted to false in the test config and the enabling override was never set, so the legacy path ran. Feature-flag misconfiguration.",
+      "cluster_hint": "feature-flag"
+    },
+    {
+      "id": "F044",
+      "stack_trace": "AssertionError: expected rate-limit 429 but got 200\n  at test_ratelimit.py:52 in test_rate_limited\n  at HttpAssertions.assert_status (assertions.py:88)",
+      "log_snippet": "11:30:00.000 ERROR flag 'enable_rate_limiting' off in staging config\n11:30:00.010 WARN  limiter disabled, requests not throttled\n11:30:00.011 ERROR expected 429 never returned",
+      "timestamp": "2026-06-05T11:30:00Z",
+      "service": "api-gateway",
+      "true_category": "config",
+      "true_root_cause": "The rate-limiting feature flag was disabled in the staging config, so requests were never throttled and the expected 429 never occurred. Feature-flag misconfiguration.",
+      "cluster_hint": "feature-flag"
+    },
+    {
+      "id": "F045",
+      "stack_trace": "TimeoutError: request exceeded configured timeout of 200ms\n  at http/client.py:61 in call\n  at test_search_latency.py:33 in test_search_returns",
+      "log_snippet": "12:40:00.000 ERROR client timeout set to 200ms in config\n12:40:00.010 WARN  p95 backend latency is 450ms\n12:40:00.011 ERROR timeout too low for the operation",
+      "timestamp": "2026-06-04T12:40:00Z",
+      "service": "search-service",
+      "true_category": "config",
+      "true_root_cause": "The client timeout was configured at 200ms while the backend's normal p95 latency is 450ms, so valid calls time out. Misconfigured timeout value.",
+      "cluster_hint": "timeout-value"
+    },
+    {
+      "id": "F046",
+      "stack_trace": "TimeoutError: DB statement_timeout of 100ms exceeded\n  at db/query.py:70 in execute\n  at test_report_query.py:41 in test_monthly_report",
+      "log_snippet": "13:50:00.000 ERROR statement_timeout=100ms in test DB config\n13:50:00.010 WARN  monthly aggregation legitimately takes 800ms\n13:50:00.011 ERROR query cancelled by timeout",
+      "timestamp": "2026-06-03T13:50:00Z",
+      "service": "reporting-service",
+      "true_category": "config",
+      "true_root_cause": "A DB statement_timeout of 100ms was configured, far below the ~800ms a legitimate monthly aggregation needs, so the query was cancelled. Misconfigured timeout.",
+      "cluster_hint": "timeout-value"
+    },
+    {
+      "id": "F047",
+      "stack_trace": "botocore.exceptions.ClientError: An error occurred (InvalidAccessKeyId) when calling PutObject\n  at s3/upload.py:29 in put\n  at test_backup.py:24 in test_upload_backup",
+      "log_snippet": "14:00:00.000 ERROR AWS_ACCESS_KEY_ID points to a rotated/dead key\n14:00:00.010 WARN  test config not updated after key rotation\n14:00:00.011 ERROR InvalidAccessKeyId",
+      "timestamp": "2026-06-02T14:00:00Z",
+      "service": "backup-service",
+      "true_category": "config",
+      "true_root_cause": "The configured AWS access key had been rotated out but the test config still referenced the dead key, causing auth to fail. Credential misconfiguration.",
+      "cluster_hint": "wrong-credentials"
+    },
+    {
+      "id": "F048",
+      "stack_trace": "kafka.errors.SaslAuthenticationError: Authentication failed: invalid credentials\n  at kafka/client.py:48 in connect\n  at test_events.py:19 in test_produce_event",
+      "log_snippet": "15:10:00.000 ERROR SASL username/password mismatch in broker config\n15:10:00.010 WARN  test used prod SASL creds against staging broker\n15:10:00.011 ERROR authentication failed",
+      "timestamp": "2026-06-01T15:10:00Z",
+      "service": "events-service",
+      "true_category": "config",
+      "true_root_cause": "The test used production SASL credentials against the staging Kafka broker, so authentication failed. Wrong-credentials configuration for the environment.",
+      "cluster_hint": "wrong-credentials"
+    },
+    {
+      "id": "F049",
+      "stack_trace": "RuntimeError: schema version mismatch: app expects v4, migrations at v3\n  at db/migrate.py:90 in check_version\n  at test_migrations.py:15 in test_schema_current",
+      "log_snippet": "16:20:00.000 ERROR MIGRATION_TARGET pinned to v3 in config\n16:20:00.010 WARN  application code expects schema v4\n16:20:00.011 ERROR version pin mismatch",
+      "timestamp": "2026-05-31T16:20:00Z",
+      "service": "orders-service",
+      "true_category": "config",
+      "true_root_cause": "The migration target was pinned to schema v3 in config while the application expects v4, causing a version-mismatch failure. Misconfigured version pin.",
+      "cluster_hint": "version-pin"
+    },
+    {
+      "id": "F050",
+      "stack_trace": "ValueError: model artifact 'ranker-v2' not found; config requests 'ranker-v2' but registry has 'ranker-v3'\n  at ml/load.py:40 in load_model\n  at test_ranker.py:22 in test_model_loads",
+      "log_snippet": "17:30:00.000 ERROR MODEL_VERSION pinned to 'ranker-v2' in config\n17:30:00.010 WARN  v2 artifact deprecated and removed from registry\n17:30:00.011 ERROR model load failed",
+      "timestamp": "2026-05-30T17:30:00Z",
+      "service": "recommendation-service",
+      "true_category": "config",
+      "true_root_cause": "Config pinned the model version to a deprecated artifact (ranker-v2) that was removed from the registry, so loading failed. Misconfigured version pin.",
+      "cluster_hint": "version-pin"
+    }
+  ]
+}
